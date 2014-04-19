@@ -9,6 +9,9 @@
         "symfony/console": "2.4.*",
         "h2s/reddit-api-client": "2.*",
         "doctrine/orm": "*",
-        "symfony/dependency-injection": "2.4.*"
+        "symfony/dependency-injection": "2.4.*",
+        "symfony/yaml": "2.4.*",
+        "symfony/config": "2.4.*",
+        "symfony/proxy-manager-bridge": "2.4.*"
     }
 }
