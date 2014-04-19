@@ -1,0 +1,13 @@
+{
+    "name": "jdart/reddit2twitter",
+    "autoload": {
+        "psr-0" : {
+            "JDart\\Reddit2Twitter" : "src"
+        }
+    }
+    "require": {
+        "symfony/console": "2.4.*",
+        "h2s/reddit-api-client": "2.*",
+        "doctrine/orm": "*"
+    }
+}
