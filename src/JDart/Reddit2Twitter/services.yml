@@ -21,4 +21,12 @@ services:
         class:          JDart\Reddit2Twitter\Command\UpdateCommand 
         calls:
             - [setContainer, ["@service_container"]]
-
+    reddit_client_factory:
+        class:          Reddit\Api\Client\Factory
+    reddit_client:
+        class:          Reddit\Api\Client
+        factory_class:  JDart\Reddit2Twitter\Setup\ClientFactory
+        factory_method: getAuthorizedRedditClient
+        arguments:
+            - "@reddit_client_factory"
+            - "%reddit.credentials%"

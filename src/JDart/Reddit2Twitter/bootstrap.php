@@ -16,7 +16,6 @@ $local_config_loader = new YamlFileLoader($container, new FileLocator(__DIR__."/
 $local_config_loader->load('config.yml');
 
 $cli_application = $container->get('cli_application');
-
 $cli_application->setCatchExceptions(true);
 $cli_application->setHelperSet(ConsoleRunner::createHelperSet($container->get('entity_manager')));
 ConsoleRunner::addCommands($cli_application);
