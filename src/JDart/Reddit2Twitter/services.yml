@@ -1,0 +1,24 @@
+
+parameters:
+    doctrine.entity_file_paths: ["vendor/jdart/reddit2twitter/src/JDart/Reddit2Twitter/Entity"]
+
+services:
+    entity_manager.configuration: 
+        class:          Doctrine\ORM\Configuration
+        factory_class:  Doctrine\ORM\Tools\Setup
+        factory_method: createAnnotationMetadataConfiguration
+        arguments:      ["%doctrine.entity_file_paths%", "%debug%"]
+    entity_manager:
+        class:          Doctrine\ORM\EntityManager
+        factory_class:  Doctrine\ORM\EntityManager
+        factory_method: create
+        arguments:      ["%doctrine.connection%", "@entity_manager.configuration"]
+    cli_application:
+        class:          Symfony\Component\Console\Application
+        calls:
+            - [add, ["@update_task"]]
+    update_task:
+        class:          JDart\Reddit2Twitter\Command\UpdateCommand 
+        calls:
+            - [setContainer, ["@service_container"]]
+
