@@ -2,6 +2,7 @@
 
 namespace JDart\Reddit2Twitter\Command;
 
+use JDart\Reddit2Twitter\Twitter\CreateTweetFromRedditPost;
 use JDart\Reddit2Twitter\Entity\RedditPost;
 use JDart\Reddit2Twitter\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Command\Command;
@@ -34,7 +35,7 @@ class UpdateCommand extends ContainerAwareCommand
 
 			$rp = $this->findOrCreateRedditPost($result->id);
 
-			if ($rp->posted)
+			if ($rp->getPosted())
 				continue;
 
 			$rp->setScore($result->ups);
@@ -42,6 +43,13 @@ class UpdateCommand extends ContainerAwareCommand
 
 			if ($rp->getScore() >= self::SCORE_THRESHOLD) {
 
+				$tweet = new CreateTweetFromRedditPost(
+					$result, 
+					$this->getContainer()->get('twitter_client'),
+					$this->getContainer()->get('twitter_rules')
+				);
+				
+				$tweet->execute();
 			}
 		}
 
@@ -50,11 +58,17 @@ class UpdateCommand extends ContainerAwareCommand
 
 	protected function findOrCreateRedditPost($reddit_id)
 	{
-		static $findQuery = $em->createQueryBuilder()
+		static $findQuery;
+
+		if ( ! isset($findQuery)) {
+			$findQuery = $this->getContainer()
+			->get('entity_manager')
+			->createQueryBuilder()
 			->select('p')
 			->from('JDart\Reddit2Twitter\Entity\RedditPost', 'p')
 			->where('p.reddit_id = ?1')
 			->getQuery();
+		}
 
 		try {
 
