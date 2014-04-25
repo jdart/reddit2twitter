@@ -5,14 +5,18 @@ namespace JDart\Reddit2Twitter\Twitter;
 class CreateTweetFromRedditPost
 {
 	protected $post;
-	protected $twitterApi;
+	protected $twitterOauth;
 	protected $twitterRules;
 
-	public function __construct(\Reddit\Thing\Link $post, \TwitterAPIExchange $twitterApi, GetTwitterRules $twitterRules)
+	public function __construct(\tmhOAuth $twitterOauth, GetTwitterRules $twitterRules)
+	{
+		$this->twitterOauth = $twitterOauth;
+		$this->twitterRules = $twitterRules;
+	}
+
+	public function setPost($post)
 	{
 		$this->post = $post;
-		$this->twitterApi = $twitterApi;
-		$this->twitterRules = $twitterRules;
 	}
 
 	public function getPostfields()
@@ -23,12 +27,16 @@ class CreateTweetFromRedditPost
 
 		if ($this->postIsMedia()) {
 
-			$tmp_file = $this->downloadImage($this->getPostUrl());
+			$file_info = $this->downloadImage($this->getPostUrl());
 
-			if ( ! $tmp_file)
+			if ( ! $file_info)
 				return false;
 
-			$fields['media'] = array(file_get_contents($tmp_file));
+			$fields['media[]'] = sprintf('@%s;type=%s;filename=%s',
+				$file_info['tmp_file'],
+				$file_info['mime_type'],
+				$file_info['filename']
+			);
 		}
 
 		return $fields;
@@ -74,22 +82,12 @@ class CreateTweetFromRedditPost
 		$type = finfo_file($finfo, $tmp_file);
 
 		if (in_array($type, array('image/jpeg', 'image/png'), true))
-			return $tmp_file;
+			return array(
+				'tmp_file' => $tmp_file,
+				'mime_type' => $type,
+				'filename' => basename($url)
+			);
 		
-		return false;
-	}
-
-	public function getMediaPostfields()
-	{
-		$fields = $this->getPostfields();
-
-		$tmp_file = $this->downloadImage($this->getPostUrl());
-
-		if ($tmp_file) {
-			$fields['media'] = array(file_get_contents($tmp_file));
-			return $fields;
-		}
-
 		return false;
 	}
 
@@ -127,6 +125,13 @@ class CreateTweetFromRedditPost
 		return substr($this->post->title, 0, $length) . $append;
 	}
 
+	public function getUpdateUrl()
+	{
+		return $this->postIsMedia() 
+			? 'https://api.twitter.com/1.1/statuses/update_with_media.json'
+			: 'https://api.twitter.com/1.1/statuses/update.json';
+	}
+
 	public function execute()
 	{
 		$fields = $this->getPostfields();
@@ -134,21 +139,13 @@ class CreateTweetFromRedditPost
 		if ( ! $fields)
 			return false;
 
-		if ($this->postIsMedia()) {
+		$response = $this->twitterOauth
+			->request(
+				'POST',
+				$this->twitterOauth->url($this->getUpdateUrl()),
+				$fields
+			);
 
-			$response = $this->twitterApi
-				->buildOauth('https://api.twitter.com/1.1/statuses/update_with_media.json', 'POST')
-				->setPostfields($fields)
-				->performRequest();
-
-		} else {
-
-			$response = $this->twitterApi
-				->buildOauth('https://api.twitter.com/1.1/statuses/update.json', 'POST')
-				->setPostfields($fields)
-				->performRequest();
-		}
-
-		var_dump($response); exit;
+		var_dump($this->twitterOauth->response['response']); exit;
 	}
 }

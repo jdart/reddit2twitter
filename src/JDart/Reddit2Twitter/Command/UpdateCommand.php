@@ -43,13 +43,9 @@ class UpdateCommand extends ContainerAwareCommand
 
 			if ($rp->getScore() >= self::SCORE_THRESHOLD) {
 
-				$tweet = new CreateTweetFromRedditPost(
-					$result, 
-					$this->getContainer()->get('twitter_client'),
-					$this->getContainer()->get('twitter_rules')
-				);
-				
-				$tweet->execute();
+				$tweet = $this->getContainer()->get('twitter_tweet');				
+				$tweet->setPost($result);
+				$tweet->execute($result);
 			}
 		}
 

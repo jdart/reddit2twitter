@@ -30,9 +30,12 @@ services:
         arguments:
             - "@reddit_client_factory"
             - "%reddit.credentials%"
-    twitter_client:
-        class: TwitterAPIExchange
+    twitter_oauth:
+        class: tmhOAuth
         arguments: ["%twitter.credentials%"]
     twitter_rules:
         class: JDart\Reddit2Twitter\Twitter\GetTwitterRules
-        arguments: ["%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter_client"] 
+        arguments: ["%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter_oauth"] 
+    twitter_tweet:
+        class:    JDart\Reddit2Twitter\Twitter\CreateTweetFromRedditPost
+        arguments: ["@twitter_oauth", "@twitter_rules"]

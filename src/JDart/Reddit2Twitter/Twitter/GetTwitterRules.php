@@ -4,15 +4,15 @@ namespace JDart\Reddit2Twitter\Twitter;
 
 class GetTwitterRules
 {
-	protected $twitterApi;
+	protected $twitterOauth;
 	protected $cacheDir;
 	protected $cacheLifetime;
 
-	public function __construct($cacheDir, $cacheLifetime, \TwitterAPIExchange $twitterApi)
+	public function __construct($cacheDir, $cacheLifetime, \tmhOAuth $twitterOauth)
 	{
 		$this->cacheDir = $cacheDir;
 		$this->cacheLifetime = $cacheLifetime;
-		$this->twitterApi = $twitterApi;
+		$this->twitterOauth = $twitterOauth;
 	}
 
 	protected function getAllRules()
@@ -30,11 +30,13 @@ class GetTwitterRules
 
 		} else {
 
-			$config = $this->twitterApi
-				->buildOauth('https://api.twitter.com/1.1/help/configuration.json', 'GET')
-				->performRequest();
+			$this->twitterOauth
+				->request(
+					'GET',
+					$this->twitterOauth->url('https://api.twitter.com/1.1/help/configuration.json')
+				);
 
-			$config = json_decode($config);
+			$config = json_decode($this->twitterOauth->response['response']);
 
 			file_put_contents($cacheFile, serialize($config));
 		}
