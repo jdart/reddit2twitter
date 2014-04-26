@@ -16,9 +16,9 @@ services:
     cli_application:
         class:          Symfony\Component\Console\Application
         calls:
-            - [add, ["@update_task"]]
-    update_task:
-        class:          JDart\Reddit2Twitter\Command\UpdateCommand 
+            - [add, ["@cron_command"]]
+    cron_command:
+        class:          JDart\Reddit2Twitter\Command\CronCommand 
         calls:
             - [setContainer, ["@service_container"]]
     reddit_client_factory:
@@ -31,11 +31,19 @@ services:
             - "@reddit_client_factory"
             - "%reddit.credentials%"
     twitter_oauth:
-        class: tmhOAuth
-        arguments: ["%twitter.credentials%"]
+        class:          tmhOAuth
+        arguments:      ["%twitter.credentials%"]
     twitter_rules:
-        class: JDart\Reddit2Twitter\Twitter\GetTwitterRules
-        arguments: ["%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter_oauth"] 
-    twitter_tweet:
-        class:    JDart\Reddit2Twitter\Twitter\CreateTweetFromRedditPost
-        arguments: ["@twitter_oauth", "@twitter_rules"]
+        class:          JDart\Reddit2Twitter\Twitter\GetRules
+        arguments:      ["%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter_oauth"] 
+    r2t_task.tweet:
+        class:          JDart\Reddit2Twitter\Task\CreateTweetFromRedditLink
+        arguments:      ["@twitter_oauth", "@twitter_rules"]
+    r2t_task.queue_items:
+        class:          JDart\Reddit2Twitter\Task\QueueItems
+        arguments:      ["@entity_manager", "@reddit_client"]
+        calls:
+            - [setThreshold, ["%reddit.threshold%"]]
+    r2t_task.tweet_queued_items:
+        class:          JDart\Reddit2Twitter\Task\TweetQueuedItems
+        arguments:      ["@entity_manager", "@r2t_task.tweet"]

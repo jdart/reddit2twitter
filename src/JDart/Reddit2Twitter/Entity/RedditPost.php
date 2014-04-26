@@ -19,6 +19,12 @@ class RedditPost
 	/** @Column(type="boolean") **/
 	protected $posted = false;
 
+	/** @Column(type="boolean") **/
+	protected $queued = false;
+
+	/** @Column(type="text", nullable=true) **/
+	protected $post_data = null;
+
 	public function setId($id)
 	{
 		$this->id = (int)$id;
@@ -39,6 +45,16 @@ class RedditPost
 		return $this->reddit_id;
 	}
 
+	public function setQueued($queued)
+	{
+		$this->queued = $queued;
+	}
+
+	public function getQueued()
+	{
+		return $this->queued;
+	}
+
 	public function setScore($score)
 	{
 		$this->score = (int)$score;
@@ -57,5 +73,15 @@ class RedditPost
 	public function getPosted()
 	{
 		return $this->posted;
+	}
+
+	public function getPostData()
+	{
+		return $this->post_data;
+	}
+
+	public function setPostData($post_data)
+	{
+		$this->post_data = $post_data;
 	}
 }

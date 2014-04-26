@@ -1,7 +1,5 @@
 <?php
 
-error_reporting(E_ALL ^ E_DEPRECATED);
-
 require_once "vendor/autoload.php";
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -12,15 +10,10 @@ use Doctrine\ORM\Tools\Console\ConsoleRunner;
 $container = new ContainerBuilder();
 
 $global_config_loader = new YamlFileLoader($container, new FileLocator(__DIR__));
-$global_config_loader->load('services.yml');
+$global_config_loader->load('services_test.yml');
 
 $local_config_loader = new YamlFileLoader($container, new FileLocator(__DIR__."/../../../../../../app/config"));
-$local_config_loader->load('config.yml');
+$local_config_loader->load('config_test.yml');
 
 $cli_application = $container->get('cli_application');
-$cli_application->setCatchExceptions(true);
-$cli_application->setHelperSet(ConsoleRunner::createHelperSet($container->get('entity_manager')));
-ConsoleRunner::addCommands($cli_application);
-
-$cli_application->run();
 
