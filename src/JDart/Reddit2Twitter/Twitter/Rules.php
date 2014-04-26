@@ -2,17 +2,21 @@
 
 namespace JDart\Reddit2Twitter\Twitter;
 
-class GetTwitterRules
+use \JDart\Reddit2Twitter\Twitter\ClientInterface;
+
+class Rules
 {
-	protected $twitterOauth;
+	const MAX_TWEET_LENGTH = 140;
+
+	protected $twitterClient;
 	protected $cacheDir;
 	protected $cacheLifetime;
 
-	public function __construct($cacheDir, $cacheLifetime, \tmhOAuth $twitterOauth)
+	public function __construct($cacheDir, $cacheLifetime, ClientInterface $twitterClient)
 	{
 		$this->cacheDir = $cacheDir;
 		$this->cacheLifetime = $cacheLifetime;
-		$this->twitterOauth = $twitterOauth;
+		$this->twitterClient = $twitterClient;
 	}
 
 	protected function getAllRules()
@@ -30,13 +34,10 @@ class GetTwitterRules
 
 		} else {
 
-			$this->twitterOauth
-				->request(
-					'GET',
-					$this->twitterOauth->url('https://api.twitter.com/1.1/help/configuration.json')
-				);
+			$this->twitterClient
+				->getRequest('https://api.twitter.com/1.1/help/configuration.json');
 
-			$config = json_decode($this->twitterOauth->response['response']);
+			$config = json_decode($this->twitterClient->getResponseBody());
 
 			file_put_contents($cacheFile, serialize($config));
 		}
@@ -67,5 +68,10 @@ class GetTwitterRules
 	public function getShortUrlLengthHttps()
 	{
 		return $this->getRule('short_url_length_https');
+	}
+
+	public function getMaxLength()
+	{
+		return self::MAX_TWEET_LENGTH;
 	}
 }

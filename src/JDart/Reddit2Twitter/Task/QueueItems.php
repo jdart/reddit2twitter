@@ -2,13 +2,18 @@
 
 namespace JDart\Reddit2Twitter\Task;
 
+use Doctrine\ORM\EntityManager;
+use JDart\Reddit2Twitter\Reddit\ClientInterface;
+use JDart\Reddit2Twitter\Entity\RedditPost;
+use Reddit\Thing\Link;
+
 class QueueItems
 {
 	protected $em;
 	protected $rc;
 	protected $threshold;
 
-	public function __construct(\Doctrine\ORM\EntityManager $em, \Reddit\Api\Client $rc)
+	public function __construct(EntityManager $em, ClientInterface $rc)
 	{
 		$this->em = $em;
 		$this->rc = $rc;
@@ -21,9 +26,7 @@ class QueueItems
 
 	public function execute()
 	{
-		$results = $this->rc
-			->getCommand('GetLinksBySubreddit', array('subreddit' => 'all'))
-			->execute();
+		$results = $this->rc->getLinksFromSubreddit('all');
 
 		foreach ($results as $link) {
 
@@ -43,7 +46,7 @@ class QueueItems
 		$this->em->flush();
 	}
 
-	protected function findOrCreateLocalRedditPost(\Reddit\Thing\Link $link)
+	protected function findOrCreateLocalRedditPost(Link $link)
 	{
 		static $findQuery;
 
@@ -56,15 +59,13 @@ class QueueItems
 				->getQuery();
 		}
 
-		try {
+		$rp = $findQuery
+			->setParameter(1, $link->id)
+			->getOneOrNullResult();
 
-			$rp = $findQuery
-				->setParameter(1, $link->id)
-				->getSingleResult();
+		if (is_null($rp)) {
 
-		} catch (\Doctrine\ORM\NoResultException $e) {
-
-			$rp = new \JDart\Reddit2Twitter\Entity\RedditPost;
+			$rp = new RedditPost;
 			$rp->setRedditId($link->id);
 		}
 

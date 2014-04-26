@@ -2,12 +2,17 @@
 
 namespace JDart\Reddit2Twitter\Task;
 
+use Doctrine\ORM\EntityManager;
+use JDart\Reddit2Twitter\Task\TweetItem;
+use JDart\Reddit2Twitter\Exception\LimitExceededException;
+use JDart\Reddit2Twitter\Exception\TweetFailedException;
+
 class TweetQueuedItems
 {
 	protected $em;
 	protected $tweeter;
 
-	public function __construct(\Doctrine\ORM\EntityManager $em, \JDart\Reddit2Twitter\Task\CreateTweetFromRedditLink $tweeter)
+	public function __construct(EntityManager $em, TweetItem $tweeter)
 	{
 		$this->em = $em;
 		$this->tweeter = $tweeter;
@@ -32,13 +37,27 @@ class TweetQueuedItems
 
 			$this->tweeter->setLink($link);
 
-			if ($this->tweeter->tweet()) {
+			try {
 
-				$rp->setPosted(true);
-				$rp->setQueued(false);
+				$this->tweeter->tweet();
 
-				$this->em->persist($rp);
-				$this->em->flush();
+			} catch (TweetFailedException $e) {
+
+				continue;
+			}
+
+			$rp->setPosted(true);
+			$rp->setQueued(false);
+
+			$this->em->persist($rp);
+			$this->em->flush();
+
+			$window = $this->tweeter->getNextWindow();
+
+			if ($window !== 0) {
+				$e = new LimitExceededException;
+				$e->setNextWindow($window);
+				throw $e;
 			}
 
 			sleep(5);

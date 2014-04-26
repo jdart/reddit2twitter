@@ -21,29 +21,25 @@ services:
         class:          JDart\Reddit2Twitter\Command\CronCommand 
         calls:
             - [setContainer, ["@service_container"]]
-    reddit_client_factory:
-        class:          Reddit\Api\Client\Factory
-    reddit_client:
-        class:          Reddit\Api\Client
-        factory_class:  JDart\Reddit2Twitter\Setup\ClientFactory
-        factory_method: getAuthorizedRedditClient
-        arguments:
-            - "@reddit_client_factory"
-            - "%reddit.credentials%"
-    twitter_oauth:
-        class:          tmhOAuth
-        arguments:      ["%twitter.credentials%"]
-    twitter_rules:
-        class:          JDart\Reddit2Twitter\Twitter\GetRules
-        arguments:      ["%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter_oauth"] 
-    r2t_task.tweet:
-        class:          JDart\Reddit2Twitter\Task\CreateTweetFromRedditLink
-        arguments:      ["@twitter_oauth", "@twitter_rules"]
+    reddit.client:
+        class:          JDart\Reddit2Twitter\Reddit\ClientH2S
+        calls:
+            - [configure, ["%reddit.credentials%"]]
+    twitter.client:
+        class:          JDart\Reddit2Twitter\Twitter\ClientTmhOauth
+        calls:
+            - [configure, ["%twitter.credentials%"]]
+    twitter.rules:
+        class:          JDart\Reddit2Twitter\Twitter\Rules
+        arguments:      ["%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter.client"] 
+    r2t_task.tweet_item:
+        class:          JDart\Reddit2Twitter\Task\TweetItem
+        arguments:      ["@twitter.client", "@twitter.rules"]
     r2t_task.queue_items:
         class:          JDart\Reddit2Twitter\Task\QueueItems
-        arguments:      ["@entity_manager", "@reddit_client"]
+        arguments:      ["@entity_manager", "@reddit.client"]
         calls:
             - [setThreshold, ["%reddit.threshold%"]]
     r2t_task.tweet_queued_items:
         class:          JDart\Reddit2Twitter\Task\TweetQueuedItems
-        arguments:      ["@entity_manager", "@r2t_task.tweet"]
+        arguments:      ["@entity_manager", "@r2t_task.tweet_item"]

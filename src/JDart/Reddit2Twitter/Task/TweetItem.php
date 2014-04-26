@@ -2,15 +2,19 @@
 
 namespace JDart\Reddit2Twitter\Task;
 
-class CreateTweetFromRedditLink
+use JDart\Reddit2Twitter\Twitter\Rules;
+use JDart\Reddit2Twitter\Twitter\ClientInterface;
+use JDart\Reddit2Twitter\Exception\TweetFailedException;
+
+class TweetItem
 {
 	protected $link;
-	protected $twitterOauth;
+	protected $twitterClient;
 	protected $twitterRules;
 
-	public function __construct(\tmhOAuth $twitterOauth, \JDart\Reddit2Twitter\Twitter\GetRules $twitterRules)
+	public function __construct(ClientInterface $twitterClient, Rules $twitterRules)
 	{
-		$this->twitterOauth = $twitterOauth;
+		$this->twitterClient = $twitterClient;
 		$this->twitterRules = $twitterRules;
 	}
 
@@ -98,10 +102,9 @@ class CreateTweetFromRedditLink
 
 	public function linkIsMedia()
 	{
-		if ($url = $this->getLinkUrl())
-			return preg_match('/\.(jpg|jpeg|png)$/', $url);
+		$path = parse_url($this->getLinkUrl(), PHP_URL_PATH);
 		
-		return false;
+		return preg_match('/\.(jpg|jpeg|png)$/', $path);
 	}
 
 	public function getLinkUrl()
@@ -114,15 +117,15 @@ class CreateTweetFromRedditLink
 
 	public function getLinkTitle()
 	{
-		$length = 140;
+		$length = $this->twitterRules->getMaxLength();
 		$append = '';
 
 		if ($url = $this->getLinkUrl()) {
 
 			if ($this->linkIsMedia()) {
-				$length = 140 - $this->twitterRules->getCharactersReservedPerMedia() - 1;
+				$length = $length - $this->twitterRules->getCharactersReservedPerMedia() - 1;
 			} else {
-				$length = 140 - $this->twitterRules->getShortUrlLength() - 1;
+				$length = $length - $this->twitterRules->getShortUrlLength() - 1;
 				$append = ' ' . $url;
 			}
 		}
@@ -137,6 +140,25 @@ class CreateTweetFromRedditLink
 			: 'https://api.twitter.com/1.1/statuses/update.json';
 	}
 
+	public function getNextWindow()
+	{
+		if ($this->linkIsMedia()) {
+
+			$limit_remaining = (int)$this->twitterClient->getResponseHeader('x-mediaratelimit-remaining');
+			$limit_reset = (int)$this->twitterClient->getResponseHeader('x-mediaratelimit-reset');
+
+		} else {
+
+			$limit_remaining = (int)$this->twitterClient->getResponseHeader('x-ratelimit-remaining');
+			$limit_reset = (int)$this->twitterClient->getResponseHeader('x-ratelimit-reset');
+		}
+
+		if ($limit_remaining)
+			return 0;
+
+		return $limit_reset;
+	}
+
 	public function tweet()
 	{
 		$fields = $this->getLinkFields();
@@ -144,13 +166,14 @@ class CreateTweetFromRedditLink
 		if ( ! $fields)
 			return false;
 
-		$response = $this->twitterOauth
-			->request(
-				'POST',
-				$this->twitterOauth->url($this->getUpdateUrl()),
-				$fields,
-				true,
-				true
-			);
+		$this->twitterClient->postRequest(
+			$this->getUpdateUrl(),
+			$fields
+		);
+
+		if ($this->twitterClient->getResponse() !== 200)
+			throw new TweetFailedException($this->twitterClient->getResponse());
+		
+		return true;
 	}
 }
