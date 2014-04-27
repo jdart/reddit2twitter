@@ -67,7 +67,7 @@ class CronCommand extends ContainerAwareCommand
 
 		} catch (LimitExceededException $e) {
 
-			$output->writeln('rate limit exceeded, waiting... ' . date('Y-m-d H:i:s', strtotime($e->getNextWindow())));
+			$output->writeln('Rate limit exceeded, waiting... ' . date('Y-m-d H:i:s', strtotime($e->getNextWindow())));
 
 			file_put_contents($nextWindowFile, $e->getNextWindow());
 		}

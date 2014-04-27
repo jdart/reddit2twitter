@@ -19,9 +19,6 @@ class RedditPost
 	/** @Column(type="boolean") **/
 	protected $posted = false;
 
-	/** @Column(type="boolean") **/
-	protected $queued = false;
-
 	/** @Column(type="text", nullable=true) **/
 	protected $post_data = null;
 
@@ -43,16 +40,6 @@ class RedditPost
 	public function getRedditId()
 	{
 		return $this->reddit_id;
-	}
-
-	public function setQueued($queued)
-	{
-		$this->queued = $queued;
-	}
-
-	public function getQueued()
-	{
-		return $this->queued;
 	}
 
 	public function setScore($score)

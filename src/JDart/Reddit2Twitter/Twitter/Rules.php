@@ -70,6 +70,11 @@ class Rules
 		return $this->getRule('short_url_length_https');
 	}
 
+	public function getMaxPhotoSize()
+	{
+		return $this->getRule('photo_size_limit');
+	}
+
 	public function getMaxLength()
 	{
 		return self::MAX_TWEET_LENGTH;

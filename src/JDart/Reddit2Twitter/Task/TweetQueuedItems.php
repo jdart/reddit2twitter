@@ -4,8 +4,8 @@ namespace JDart\Reddit2Twitter\Task;
 
 use Doctrine\ORM\EntityManager;
 use JDart\Reddit2Twitter\Task\TweetItem;
-use JDart\Reddit2Twitter\Exception\LimitExceededException;
-use JDart\Reddit2Twitter\Exception\TweetFailedException;
+use JDart\Reddit2Twitter\Exception\TweetRejectedException;
+use JDart\Reddit2Twitter\Exception\InvalidMediaException;
 
 class TweetQueuedItems
 {
@@ -24,7 +24,8 @@ class TweetQueuedItems
 			->createQueryBuilder()
 			->select('p')
 			->from('JDart\Reddit2Twitter\Entity\RedditPost', 'p')
-			->where('p.queued = true')
+			->where('p.posted = false')
+			->orderBy('p.score', 'DESC')
 			->getQuery()
 			->getResult();
 	}
@@ -33,34 +34,24 @@ class TweetQueuedItems
 	{
 		foreach ($this->getQueued() as $rp) {
 
-			$link = unserialize($rp->getPostData());
-
-			$this->tweeter->setLink($link);
+			$this->tweeter->setLink(unserialize($rp->getPostData()));
 
 			try {
-
 				$this->tweeter->tweet();
-
-			} catch (TweetFailedException $e) {
-
+			} catch (TweetRejectedException $e) {
+				continue;
+			} catch (InvalidMediaException $e) {
 				continue;
 			}
 
 			$rp->setPosted(true);
-			$rp->setQueued(false);
-
 			$this->em->persist($rp);
 			$this->em->flush();
 
-			$window = $this->tweeter->getNextWindow();
+			$this->tweeter->cleanUp();
+			$this->tweeter->checkForLimitExceeded();
 
-			if ($window !== 0) {
-				$e = new LimitExceededException;
-				$e->setNextWindow($window);
-				throw $e;
-			}
-
-			sleep(5);
+			break;
 		}		
 	}
 }

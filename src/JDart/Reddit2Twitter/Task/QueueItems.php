@@ -19,29 +19,24 @@ class QueueItems
 		$this->rc = $rc;
 	}
 
-	public function setThreshold($threshold)
+	public function garbageCollectDb()
 	{
-		$this->threshold = $threshold;
+		$result = $this->em
+			->createQueryBuilder()
+			->delete('\JDart\Reddit2Twitter\Entity\RedditPost', 'p')
+			->where('p.posted = false')
+			->getQuery()
+			->getResult();
 	}
 
 	public function execute()
 	{
+		$this->garbageCollectDb();
+
 		$results = $this->rc->getLinksFromSubreddit('all');
 
-		foreach ($results as $link) {
-
-			$rp = $this->findOrCreateLocalRedditPost($link);
-
-			if ($rp->getPosted() || $rp->getQueued())
-				continue;
-
-			if ($rp->getScore() >= $this->threshold) {
-
-				$rp->setPostData(serialize($link));
-				$rp->setQueued(true);
-				$this->em->persist($rp);
-			}
-		}
+		foreach ($results as $link) 
+			$this->findOrCreateLocalRedditPost($link);
 
 		$this->em->flush();
 	}
@@ -54,7 +49,7 @@ class QueueItems
 			$findQuery = $this->em
 				->createQueryBuilder()
 				->select('p')
-				->from('JDart\Reddit2Twitter\Entity\RedditPost', 'p')
+				->from('\JDart\Reddit2Twitter\Entity\RedditPost', 'p')
 				->where('p.reddit_id = ?1')
 				->getQuery();
 		}
@@ -70,6 +65,7 @@ class QueueItems
 		}
 
 		$rp->setScore($link->ups);
+		$rp->setPostData(serialize($link));
 
 		$this->em->persist($rp);
 

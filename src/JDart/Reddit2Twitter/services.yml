@@ -38,8 +38,6 @@ services:
     r2t_task.queue_items:
         class:          JDart\Reddit2Twitter\Task\QueueItems
         arguments:      ["@entity_manager", "@reddit.client"]
-        calls:
-            - [setThreshold, ["%reddit.threshold%"]]
     r2t_task.tweet_queued_items:
         class:          JDart\Reddit2Twitter\Task\TweetQueuedItems
         arguments:      ["@entity_manager", "@r2t_task.tweet_item"]
