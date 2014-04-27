@@ -21,9 +21,7 @@ class Rules
 
 	protected function getAllRules()
 	{
-		$cacheDir = __DIR__ . "/../../../../../../../" . $this->cacheDir;
-
-		$cacheFile = $cacheDir . '/twitter_rules';
+		$cacheFile = $this->cacheDir . '/twitter_rules';
 
 		if (
 			is_file($cacheFile) 

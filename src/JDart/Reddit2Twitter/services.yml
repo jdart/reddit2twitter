@@ -31,7 +31,7 @@ services:
             - [configure, ["%twitter.credentials%"]]
     twitter.rules:
         class:          JDart\Reddit2Twitter\Twitter\Rules
-        arguments:      ["%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter.client"] 
+        arguments:      ["%paths.app%/%twitter.cache_dir%", "%twitter.cache_lifetime%", "@twitter.client"] 
     r2t_task.tweet_item:
         class:          JDart\Reddit2Twitter\Task\TweetItem
         arguments:      ["@twitter.client", "@twitter.rules"]

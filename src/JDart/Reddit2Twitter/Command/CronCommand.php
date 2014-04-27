@@ -23,7 +23,7 @@ class CronCommand extends ContainerAwareCommand
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		$appDir = realpath(__DIR__ . "/../../../../../../../") . '/';
+		$appDir = $this->getContainer()->getParameter('paths.app') . '/';
 		$lockFile = $appDir . $this->getContainer()->getParameter('lock.file');
 		$nextWindowFile = $appDir . $this->getContainer()->getParameter('lock.next_window');
 

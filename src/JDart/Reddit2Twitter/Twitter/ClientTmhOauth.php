@@ -23,8 +23,6 @@ class ClientTmhOauth implements ClientInterface
 
 	public function postRequest($url, $params=array()) 
 	{
-		// die('posted');
-
 		$this->response = $this->tmhOAuth->request(
 			'POST',
 			$this->tmhOAuth->url($url),
@@ -38,8 +36,6 @@ class ClientTmhOauth implements ClientInterface
 
 	public function getRequest($url, $params=array())
 	{
-		// die('getted');
-
 		$this->response = $this->tmhOAuth->request(
 			'GET',
 			$this->tmhOAuth->url($url),
