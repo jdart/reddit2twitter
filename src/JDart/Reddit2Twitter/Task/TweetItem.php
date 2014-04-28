@@ -94,7 +94,7 @@ class TweetItem
 		return sprintf('@%s;type=%s;filename=%s',
 			$tmp_file,
 			$mime_type,
-			basename($this->getMediaUrl())
+			basename($url)
 		);
 	}
 
