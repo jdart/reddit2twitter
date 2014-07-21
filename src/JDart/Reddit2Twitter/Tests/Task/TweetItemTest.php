@@ -125,6 +125,6 @@ class TweetItemTest extends PHPUnit_Framework_TestCase
 
 		$this->assertTrue($this->tweeter->isMediaValidSize($resized));
 
-		// unlink($resized);
+		unlink($resized);
 	}
 }
