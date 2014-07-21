@@ -48,7 +48,7 @@ class TweetItem
 
 		$mime_type = finfo_file($finfo, $path);
 
-		if ( ! in_array($mime_type, array('image/jpeg', 'image/png'), true))
+		if ( ! in_array($mime_type, array('image/jpeg', 'image/png', 'image/gif'), true))
 			return false;
 
 		return $mime_type;
@@ -79,6 +79,36 @@ class TweetItem
 		return $new_file;
 	}
 
+	public function resizeAnimatedGif($file)
+	{
+		if ($this->isMediaValidSize($file))
+			return $file;
+
+		$new_file = $file . '_resized';
+		$size = filesize($file);
+		$max = $this->twitterRules->getMaxPhotoSize();
+		$ratio = ($max/$size) * 0.8;
+
+		$resizer = new \Imagick($file);
+
+		$newWidth = floor($resizer->getImageWidth() * $ratio);
+		$newHeight = floor($resizer->getImageHeight() * $ratio);
+
+		foreach ($resizer as $frame) { 
+		  $frame->thumbnailImage($newWidth, $newHeight); 
+		  $frame->setImagePage($newWidth, $newHeight, 0, 0); 
+		} 
+
+		$resizer = $resizer->deconstructImages(); 
+		$resizer->writeImages($new_file, true); 
+		$resizer->clear();
+		$resizer->destroy(); 
+
+		$this->files[] = $new_file;
+
+		return $new_file;
+	}
+
 	public function getMediaField()
 	{
 		$url = $this->getMediaUrl();
@@ -89,7 +119,10 @@ class TweetItem
 		if ( ! ($mime_type = $this->getMimeTypeIfValidMedia($tmp_file)))
 			throw new InvalidMediaException;
 		
-		$tmp_file = $this->resizeMedia($tmp_file);
+		if ($mime_type == 'image/gif')
+			$tmp_file = $this->resizeAnimatedGif($tmp_file);
+		else
+			$tmp_file = $this->resizeMedia($tmp_file);
 
 		return sprintf('@%s;type=%s;filename=%s',
 			$tmp_file,
@@ -150,7 +183,7 @@ class TweetItem
 
 		$normalized_url = sprintf('%s://%s%s', $parts['scheme'], $parts['host'], $parts['path']);
 
-		if (preg_match('/\.(jpg|jpeg|png)$/', $normalized_url))
+		if (preg_match('/\.(jpg|jpeg|png|gif)$/', $normalized_url))
 			return $normalized_url;
 
 		return false;

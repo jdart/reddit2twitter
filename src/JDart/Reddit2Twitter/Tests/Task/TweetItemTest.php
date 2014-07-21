@@ -97,9 +97,9 @@ class TweetItemTest extends PHPUnit_Framework_TestCase
 
 	public function testMediaManipulation()
 	{
-		$this->assertSame('image/jpeg', $this->tweeter->getMimeTypeIfValidMedia($this->fixturesPath.'valid.jpg'));
+		$this->assertSame('image/gif', $this->tweeter->getMimeTypeIfValidMedia($this->fixturesPath.'animated.gif'));
 
-		$this->assertSame(false, $this->tweeter->getMimeTypeIfValidMedia($this->fixturesPath.'animated.gif'));
+		$this->assertSame('image/jpeg', $this->tweeter->getMimeTypeIfValidMedia($this->fixturesPath.'valid.jpg'));
 
 		$this->assertSame(false, $this->tweeter->getMimeTypeIfValidMedia($this->fixturesPath.'invalid.jpg'));
 
@@ -116,5 +116,15 @@ class TweetItemTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($this->tweeter->isMediaValidSize($resized));
 
 		unlink($resized);
+
+		$big_gif = $this->fixturesPath.'animated-big.gif';
+
+		$resized = $this->tweeter->resizeAnimatedGif($big_gif);
+
+		$this->assertNotEquals($big_gif, $resized);
+
+		$this->assertTrue($this->tweeter->isMediaValidSize($resized));
+
+		// unlink($resized);
 	}
 }
